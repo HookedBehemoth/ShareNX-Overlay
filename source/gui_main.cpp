@@ -1,8 +1,9 @@
 #include "gui_main.hpp"
 #include "gui_error.hpp"
-#include "gui_upload.hpp"
+#include "upload.hpp"
 
 #include "elm_button.hpp"
+#include "elm_text.hpp"
 
 #include <string>
 
@@ -80,14 +81,16 @@ tsl::Element* GuiMain::createUI() {
         );
         screen->drawString(date, false, 95, 340, 25, tsl::a(0xFFFF));
     });
-
     rootFrame->addElement(imgElm);
+    
+    auto txt = new Text(0, 480, FB_WIDTH, 80, "HALLO");
+    rootFrame->addElement(txt);
 
     auto btn = new Button((FB_WIDTH-240)/2, 380, 240, 80, "Upload", [=](s64 key) {
-        if (key & KEY_A) {
-            free(this->img);
-            this->img = nullptr;
-            tsl::Gui::changeTo(new UploadGui(data.file_id));
+        if (key & KEY_A && !this->uploaded) {
+            auto url = web::UploadImage(data.file_id);
+            txt->setText(url);
+            this->uploaded = true;
             return true;
         }
         return false;

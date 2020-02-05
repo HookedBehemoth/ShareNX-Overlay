@@ -11,8 +11,10 @@ public:
     tsl::Gui* onSetup() {
         Result rc = smInitialize();
 
-        if (R_FAILED(rc))
+        if (R_FAILED(rc)) {
+            smExit();
             return new ErrorGui(rc, "Failed to init sm!");
+        }
 
         SocketInitConfig sockConf = {
             .bsdsockets_version = 1,
@@ -31,12 +33,17 @@ public:
             .bsd_service_type       = BsdServiceType_Auto,
         };
         rc = socketInitialize(&sockConf);
-        if (R_FAILED(rc))
+        if (R_FAILED(rc)) {
+            smExit();
             return new ErrorGui(rc, "Socket init failed!");
+        }
 
         rc = capsaInitialize();
-        if (R_FAILED(rc))
+        if (R_FAILED(rc)) {
+            socketExit();
+            smExit();
             return new ErrorGui(rc, "Failed to init CapSrv!");
+        }
 
         return new GuiMain();
     }
@@ -44,7 +51,6 @@ public:
     virtual void onDestroy() {
         socketExit();
         capsaExit();
-        smExit();
     }
 
 };

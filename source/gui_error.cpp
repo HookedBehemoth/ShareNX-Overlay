@@ -16,6 +16,9 @@ ErrorGui::ErrorGui(Result result, const std::string &message) : rc(result), msg(
 ErrorGui::~ErrorGui() { }
 
 tsl::Element* ErrorGui::createUI() {
+    this->setTitle("ShareNX");
+    this->setSubtitle("Behemoth, v1.0.0");
+
     auto root = new LastFrame();
     auto error = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [&](u16 x, u16 y, tsl::Screen *screen) {
         screen->drawString("\uE150", false, (FB_WIDTH - 90) / 2, 300, 90, tsl::a(0xFFFF));

@@ -35,13 +35,13 @@ tsl::Element* GuiMain::createUI() {
         this->img = (u8*)malloc(IMG_SIZE);
 
     if (!img) {
-        tsl::Gui::changeTo(new ErrorGui(0, "Out of memory!"));
+        this->changeTo(new ErrorGui(0, "Out of memory!"));
         return rootFrame;
     }
 
     Result rc = capsaGetLastOverlayScreenShotThumbnail(&data, this->img, IMG_SIZE);
-    if (R_FAILED(rc) && data.size > 0 && data.file_id.application_id != 0) {
-        tsl::Gui::changeTo(new ErrorGui(rc, "No screenshot taken!"));
+    if (R_FAILED(rc) || data.size == 0 || data.file_id.application_id == 0) {
+        this->changeTo(new ErrorGui(rc, "No screenshot taken!"));
         free(this->img);
         this->img = nullptr;
         return rootFrame;
@@ -50,7 +50,7 @@ tsl::Element* GuiMain::createUI() {
     u64 w, h;
     u8* jpg = (u8*)malloc(JPG_SIZE);
     if (!jpg) {
-        tsl::Gui::changeTo(new ErrorGui(0, "Out of memory!"));
+        this->changeTo(new ErrorGui(0, "Out of memory!"));
         free(this->img);
         this->img = nullptr;
         return rootFrame;
@@ -60,7 +60,7 @@ tsl::Element* GuiMain::createUI() {
     free(jpg);
 
     if (R_FAILED(rc) || w != THUMB_WIDTH || h != THUMB_HEIGHT) {
-        tsl::Gui::changeTo(new ErrorGui(rc, "CapSrv error!"));
+        this->changeTo(new ErrorGui(rc, "CapSrv error!"));
         free(this->img);
         this->img = nullptr;
         return rootFrame;

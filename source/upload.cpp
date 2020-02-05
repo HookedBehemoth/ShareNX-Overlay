@@ -74,7 +74,9 @@ namespace web {
 
         if (res != CURLE_OK) {
             urlresponse = "curl failed";
-        } else if (urlresponse.size() > 0x50) {
+        } else if (http_code != 200) {
+            urlresponse = "failed with " + std::to_string(http_code);
+        } else if (urlresponse.size() > 0x30) {
             urlresponse = "result too long";
         }
 

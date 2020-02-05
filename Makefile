@@ -38,6 +38,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	ShareNX
+APP_VERSION	:=	1.0.0
 
 TARGET		:=	ovlShareNX
 BUILD		:=	build

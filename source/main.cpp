@@ -6,13 +6,16 @@
 class ShareOverlay : public tsl::Overlay {
 public:
     ShareOverlay() { }
-    ~ShareOverlay() { }
+    ~ShareOverlay() {
+        smExit();
+        socketExit();
+        capsaExit();
+    }
     
     tsl::Gui* onSetup() {
         Result rc = smInitialize();
 
         if (R_FAILED(rc)) {
-            smExit();
             return new ErrorGui(rc, "Failed to init sm!");
         }
 
@@ -49,6 +52,7 @@ public:
     }
 
     virtual void onDestroy() {
+        smExit();
         socketExit();
         capsaExit();
     }

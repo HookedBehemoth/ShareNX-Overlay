@@ -39,7 +39,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	ShareNX
 
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	ovlShareNX
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data

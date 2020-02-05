@@ -9,24 +9,42 @@ public:
     ~ShareOverlay() { }
     
     tsl::Gui* onSetup() {
-        tsl::Gui *next;
         Result rc = smInitialize();
-        if (R_SUCCEEDED(rc)) {
-            rc = capsaInitialize();
-            if (R_SUCCEEDED(rc)) {
-                next = new GuiMain();
-            } else {
-                next = new ErrorGui(rc, "Failed to init CapSrv!");
-            }
-            smExit();
-        } else {
-            next = new ErrorGui(rc, "Failed to init sm!");
-        }
-        return next;
+
+        if (R_FAILED(rc))
+            return new ErrorGui(rc, "Failed to init sm!");
+
+        SocketInitConfig sockConf = {
+            .bsdsockets_version = 1,
+
+            .tcp_tx_buf_size        = 0x800,
+            .tcp_rx_buf_size        = 0x800,
+            .tcp_tx_buf_max_size    = 0x25000,
+            .tcp_rx_buf_max_size    = 0x25000,
+
+            .udp_tx_buf_size = 0,
+            .udp_rx_buf_size = 0,
+
+            .sb_efficiency = 1,
+
+            .num_bsd_sessions       = 0,
+            .bsd_service_type       = BsdServiceType_Auto,
+        };
+        rc = socketInitialize(&sockConf);
+        if (R_FAILED(rc))
+            return new ErrorGui(rc, "Socket init failed!");
+
+        rc = capsaInitialize();
+        if (R_FAILED(rc))
+            return new ErrorGui(rc, "Failed to init CapSrv!");
+
+        return new GuiMain();
     }
 
     virtual void onDestroy() {
+        socketExit();
         capsaExit();
+        smExit();
     }
 
 };

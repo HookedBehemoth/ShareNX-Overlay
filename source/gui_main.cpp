@@ -15,14 +15,21 @@ constexpr size_t jpgSize = 1024*1024;
 constexpr size_t imgSize = thumbWidth*thumbHeight*4;
 
 GuiMain::GuiMain() { }
-GuiMain::~GuiMain() { }
+GuiMain::~GuiMain() {
+    if (this->img) {
+        free(this->img);
+        this->img = nullptr;
+    }
+}
 
 tsl::Element* GuiMain::createUI() {
     tsl::element::Frame *rootFrame = new tsl::element::Frame();
     tsl::element::CustomDrawer* imgElm = nullptr;
     CapsOverlayThumbnailData data = {0};
 
-    img = (u8*)malloc(imgSize);
+    if (!img)
+        img = (u8*)malloc(imgSize);
+
     if (!img) {
         tsl::Gui::changeTo(new ErrorGui(0, "Out of memory!"));
         return rootFrame;
@@ -76,9 +83,11 @@ tsl::Element* GuiMain::createUI() {
 
     rootFrame->addElement(imgElm);
 
-    auto btn = new Button((FB_WIDTH-240)/2, 380, 240, 80, "Upload", [data](s64 key) {
+    auto btn = new Button((FB_WIDTH-240)/2, 380, 240, 80, "Upload", [=](s64 key) {
         if (key & KEY_A) {
-            //tsl::Gui::changeTo(new UploadGui(data.file_id));
+            free(this->img);
+            this->img = nullptr;
+            tsl::Gui::changeTo(new UploadGui(data.file_id));
             return true;
         }
         return false;
@@ -86,11 +95,4 @@ tsl::Element* GuiMain::createUI() {
     rootFrame->addElement(btn);
 
     return rootFrame;
-}
-
-void GuiMain::onDestroy() {
-    if (this->img) {
-        free(this->img);
-        this->img = nullptr;
-    }
 }

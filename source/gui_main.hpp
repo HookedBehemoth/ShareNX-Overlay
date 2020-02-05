@@ -3,12 +3,10 @@
 
 class GuiMain : public tsl::Gui {
 private:
-    u8* img;
+    u8* img = nullptr;
 public:
     GuiMain();
     ~GuiMain();
 
     virtual tsl::Element* createUI();
-
-    virtual void onDestroy();
 };

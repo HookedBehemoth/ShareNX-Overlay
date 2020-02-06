@@ -6,7 +6,7 @@ Share your last screenshot while ingame.
 ![Mario](/images/Mario.jpg)
 
 ## How-to
-This Homebrew runs unter [nx-ovlloader](https://github.com/WerWolv/nx-ovlloader/releases).<br>
+This Homebrew runs under [nx-ovlloader](https://github.com/WerWolv/nx-ovlloader/releases).<br>
 Put the .ovl from the release inside /switch/.overlays and start it from "Tesla Menu".<br>
 
 ## Credits

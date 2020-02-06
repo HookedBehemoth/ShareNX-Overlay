@@ -20,11 +20,12 @@
 
 class ErrorGui : public tsl::Gui {
 private:
-    Result rc;
-    std::string msg;
-public:
-    ErrorGui(Result result, const std::string &message);
-    ~ErrorGui();
+	Result rc;
+	std::string msg;
 
-    tsl::Element *createUI();
+public:
+	ErrorGui(Result result, const std::string &message);
+	~ErrorGui();
+
+	tsl::Element *createUI();
 };

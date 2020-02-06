@@ -15,68 +15,66 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <tesla.hpp>    // The Tesla Header
+#include <tesla.hpp>
 
-#include "gui_main.hpp"
 #include "gui_error.hpp"
+#include "gui_main.hpp"
 
 class ShareOverlay : public tsl::Overlay {
 public:
-    ShareOverlay() { }
-    ~ShareOverlay() {
-        smExit();
-        socketExit();
-        capsaExit();
-    }
-    
-    tsl::Gui* onSetup() {
-        Result rc = smInitialize();
+	ShareOverlay() {}
+	~ShareOverlay() {
+		smExit();
+		socketExit();
+		capsaExit();
+	}
 
-        if (R_FAILED(rc)) {
-            return new ErrorGui(rc, "Failed to init sm!");
-        }
+	tsl::Gui *onSetup() {
+		Result rc = smInitialize();
 
-        SocketInitConfig sockConf = {
-            .bsdsockets_version = 1,
+		if (R_FAILED(rc)) {
+			return new ErrorGui(rc, "Failed to init sm!");
+		}
 
-            .tcp_tx_buf_size        = 0x800,
-            .tcp_rx_buf_size        = 0x800,
-            .tcp_tx_buf_max_size    = 0x25000,
-            .tcp_rx_buf_max_size    = 0x25000,
+		SocketInitConfig sockConf = {
+			.bsdsockets_version = 1,
 
-            .udp_tx_buf_size = 0,
-            .udp_rx_buf_size = 0,
+			.tcp_tx_buf_size = 0x800,
+			.tcp_rx_buf_size = 0x800,
+			.tcp_tx_buf_max_size = 0x25000,
+			.tcp_rx_buf_max_size = 0x25000,
 
-            .sb_efficiency = 1,
+			.udp_tx_buf_size = 0,
+			.udp_rx_buf_size = 0,
 
-            .num_bsd_sessions       = 0,
-            .bsd_service_type       = BsdServiceType_Auto,
-        };
-        rc = socketInitialize(&sockConf);
-        if (R_FAILED(rc)) {
-            smExit();
-            return new ErrorGui(rc, "Socket init failed!");
-        }
+			.sb_efficiency = 1,
 
-        rc = capsaInitialize();
-        if (R_FAILED(rc)) {
-            socketExit();
-            smExit();
-            return new ErrorGui(rc, "Failed to init CapSrv!");
-        }
+			.num_bsd_sessions = 0,
+			.bsd_service_type = BsdServiceType_Auto,
+		};
+		rc = socketInitialize(&sockConf);
+		if (R_FAILED(rc)) {
+			smExit();
+			return new ErrorGui(rc, "Socket init failed!");
+		}
 
-        return new GuiMain();
-    }
+		rc = capsaInitialize();
+		if (R_FAILED(rc)) {
+			socketExit();
+			smExit();
+			return new ErrorGui(rc, "Failed to init CapSrv!");
+		}
 
-    virtual void onDestroy() {
-        smExit();
-        socketExit();
-        capsaExit();
-    }
+		return new GuiMain();
+	}
 
+	virtual void onDestroy() {
+		smExit();
+		socketExit();
+		capsaExit();
+	}
 };
 
-
 tsl::Overlay *overlayLoad() {
-    return new ShareOverlay();
+	return new ShareOverlay();
 }

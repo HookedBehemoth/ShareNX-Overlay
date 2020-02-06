@@ -16,24 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with libtesla.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 #include <tesla.hpp>
 
 class Text : public tsl::Element {
 public:
-    Text(u16 x, u16 y, u16 w, u16 h, const std::string &txt);
-    ~Text();
+	Text(u16 x, u16 y, u16 w, u16 h, const std::string &txt);
+	~Text();
 
-    tsl::Element* requestFocus(Element *oldFocus, FocusDirection direction) {
-        return nullptr;
-    }
+	tsl::Element *requestFocus(Element *oldFocus, FocusDirection direction) {
+		return nullptr;
+	}
 
-    void draw(tsl::Screen *screen, u16 x, u16 y) override;
-    void layout() override;
+	void draw(tsl::Screen *screen, u16 x, u16 y) override;
+	void layout() override;
 
-    void setText(const std::string &txt);
+	void setText(const std::string &txt);
 
 private:
-    std::string m_text;
+	std::string m_text;
 };

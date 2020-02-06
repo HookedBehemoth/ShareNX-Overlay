@@ -1,10 +1,6 @@
-
 build/
-
 *.ovl
-
 *.elf
-
 *.nacp
-
 *.nro
+.vscode

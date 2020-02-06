@@ -16,22 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with libtesla.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 #include <tesla.hpp>
 
 class Button : public tsl::Element {
 public:
-    Button(u16 x, u16 y, u16 w, u16 h, const std::string &txt, std::function<bool(s64)> cb);
-    ~Button();
+	Button(u16 x, u16 y, u16 w, u16 h, const std::string &txt, std::function<bool(s64)> cb);
+	~Button();
 
-    tsl::Element* requestFocus(tsl::Element *oldFocus, FocusDirection direction) override;
+	tsl::Element *requestFocus(tsl::Element *oldFocus, FocusDirection direction) override;
 
-    void draw(tsl::Screen *screen, u16 x, u16 y) override;
-    void layout() override;
-    bool onClick(s64 key) override;
+	void draw(tsl::Screen *screen, u16 x, u16 y) override;
+	void layout() override;
+	bool onClick(s64 key) override;
 
 private:
-    std::string m_text;
-    std::function<bool(s64)> m_onClick;
+	std::string m_text;
+	std::function<bool(s64)> m_onClick;
 };

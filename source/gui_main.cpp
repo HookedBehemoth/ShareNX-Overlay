@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "gui_main.hpp"
-#include "gui_error.hpp"
-#include "upload.hpp"
+
+#include <string>
 
 #include "elm_button.hpp"
 #include "elm_text.hpp"
-
-#include <string>
+#include "gui_error.hpp"
+#include "upload.hpp"
 
 constexpr size_t THUMB_WIDTH = 320, THUMB_HEIGHT = 180;
 constexpr size_t JPG_SIZE = 1024 * 1024;

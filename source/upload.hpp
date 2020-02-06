@@ -17,8 +17,9 @@
  */
 #pragma once
 
-#include <string>
 #include <switch.h>
+
+#include <string>
 
 namespace web {
 

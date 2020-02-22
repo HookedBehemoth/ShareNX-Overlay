@@ -7,7 +7,7 @@ TabWidth: 4
 AllowShortIfStatementsOnASingleLine: false
 IncludeBlocks: Regroup
 IncludeCategories: 
-  - Regex: '^<tesla.hpp>'
+  - Regex: '^"tesla.hpp"'
     Priority: 2
   - Regex: '^<.*\.h>'
     Priority: 1

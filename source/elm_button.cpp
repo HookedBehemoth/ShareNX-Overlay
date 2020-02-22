@@ -19,29 +19,26 @@
 #include "elm_button.hpp"
 
 Button::Button(u16 x, u16 y, u16 w, u16 h, const std::string &txt, std::function<bool(s64)> cb) : m_text(txt), m_onClick(cb) {
-	this->setPosition(x, y);
-	this->setSize(w, h);
+	this->setBoundaries(x, y, w, h);
 }
 
-Button::~Button() {}
-
-tsl::Element *Button::requestFocus(tsl::Element *oldFocus, FocusDirection direction) {
+tsl::elm::Element *Button::requestFocus(tsl::elm::Element *oldFocus, tsl::FocusDirection direction) {
 	return this;
 }
 
-void Button::draw(tsl::Screen *screen, u16 x1, u16 y1) {
+void Button::draw(tsl::gfx::Renderer *renderer) {
 	const auto [x, y] = this->getPosition();
 	const auto [w, h] = this->getSize();
 
-	screen->drawRect(x, y, w, 1, a({0x5, 0x5, 0x5, 0xF}));
-	screen->drawRect(x, y + h - 1, w, 1, a({0x5, 0x5, 0x5, 0xF}));
+	renderer->drawRect(x, y, w, 1, a({0x5, 0x5, 0x5, 0xF}));
+	renderer->drawRect(x, y + h - 1, w, 1, a({0x5, 0x5, 0x5, 0xF}));
 
-	screen->drawString(this->m_text.c_str(), false, x + 20, y + 45, 23, a({0xF, 0xF, 0xF, 0xF}));
+	renderer->drawString(this->m_text.c_str(), false, x + 20, y + 45, 23, a({0xF, 0xF, 0xF, 0xF}));
 }
 
-void Button::layout() {
+void Button::layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) {
 }
 
-bool Button::onClick(s64 key) {
+bool Button::onClick(u64 key) {
 	return m_onClick(key);
 }

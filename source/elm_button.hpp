@@ -17,18 +17,17 @@
  * along with libtesla.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <tesla.hpp>
+#include "tesla.hpp"
 
-class Button : public tsl::Element {
+class Button : public tsl::elm::Element {
 public:
 	Button(u16 x, u16 y, u16 w, u16 h, const std::string &txt, std::function<bool(s64)> cb);
-	~Button();
 
-	tsl::Element *requestFocus(tsl::Element *oldFocus, FocusDirection direction) override;
+	tsl::elm::Element *requestFocus(tsl::elm::Element *oldFocus, tsl::FocusDirection direction) override;
 
-	void draw(tsl::Screen *screen, u16 x, u16 y) override;
-	void layout() override;
-	bool onClick(s64 key) override;
+	void draw(tsl::gfx::Renderer *renderer) override;
+	void layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) override;
+	bool onClick(u64 key) override;
 
 private:
 	std::string m_text;

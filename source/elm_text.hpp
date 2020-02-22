@@ -17,19 +17,18 @@
  * along with libtesla.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <tesla.hpp>
+#include "tesla.hpp"
 
-class Text : public tsl::Element {
+class Text : public tsl::elm::Element {
 public:
 	Text(u16 x, u16 y, u16 w, u16 h, const std::string &txt);
-	~Text();
 
-	tsl::Element *requestFocus(Element *oldFocus, FocusDirection direction) {
+	tsl::elm::Element *requestFocus(Element *oldFocus, tsl::FocusDirection direction) {
 		return nullptr;
 	}
 
-	void draw(tsl::Screen *screen, u16 x, u16 y) override;
-	void layout() override;
+	void draw(tsl::gfx::Renderer *renderer) override;
+	void layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) override;
 
 	void setText(const std::string &txt);
 

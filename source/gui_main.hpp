@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <tesla.hpp>
+#include "tesla.hpp"
 
 class GuiMain : public tsl::Gui {
 private:
@@ -26,8 +26,7 @@ private:
 	bool uploaded = false;
 
 public:
-	GuiMain();
 	~GuiMain();
 
-	virtual tsl::Element *createUI();
+	virtual tsl::elm::Element *createUI() override;
 };

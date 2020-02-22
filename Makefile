@@ -38,13 +38,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	ShareNX
-APP_VERSION	:=	1.0.0
+APP_VERSION	:=	1.1.0
 
-TARGET		:=	ovlShareNX
+TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
-INCLUDES	:=	include
+#INCLUDES	:=	include
 
 NO_ICON		:=  1
 
@@ -58,18 +58,18 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++17
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=	-lcurl -lmbedtls -lmbedx509 -lz -lmbedcrypto -lnx -ltesla -lnx
+LIBS	:=	-lcurl -lmbedtls -lmbedx509 -lz -lmbedcrypto -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(TOPDIR)/libs/libtesla
+LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 
 
 #---------------------------------------------------------------------------------
@@ -171,7 +171,6 @@ $(BUILD):
 
 #---------------------------------------------------------------------------------
 clean:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/libs/libtesla -f Makefile clean
 	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 
@@ -190,16 +189,9 @@ $(OUTPUT).ovl		:	$(OUTPUT).elf $(OUTPUT).nacp
 	@elf2nro $< $@ $(NROFLAGS)
 	@echo "built ... $(notdir $(OUTPUT).ovl)"
 
-$(OUTPUT).elf	:	$(OFILES) libs/libtesla/lib/libtesla.a
+$(OUTPUT).elf	:	$(OFILES)
 
 $(OFILES_SRC)	: $(HFILES_BIN)
-
-libs/libtesla/lib/libtesla.a:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/libs/libtesla -f Makefile
-	
-clean:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/libs/libtesla -f Makefile clean
-	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data

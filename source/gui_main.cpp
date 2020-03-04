@@ -17,10 +17,12 @@
  */
 #include "gui_main.hpp"
 
+#include <string>
+
 #include "gui_error.hpp"
 #include "upload.hpp"
 
-#include <string>
+static u8 img[IMG_SIZE];
 
 MainGui::MainGui() {}
 MainGui::~MainGui() {}
@@ -30,7 +32,7 @@ tsl::elm::Element *MainGui::createUI() {
 
     u64 size;
 
-    Result rc = capsaGetLastOverlayScreenShotThumbnail(&this->fileId, &size, this->img, IMG_SIZE);
+    Result rc = capsaGetLastOverlayScreenShotThumbnail(&this->fileId, &size, img, IMG_SIZE);
     if (R_FAILED(rc) || size == 0 || this->fileId.application_id == 0) {
         tsl::changeTo<ErrorGui>(rc, "No screenshot taken!");
         return rootFrame;
@@ -43,7 +45,7 @@ tsl::elm::Element *MainGui::createUI() {
         return rootFrame;
     }
 
-    rc = capsaLoadAlbumScreenShotThumbnailImage(&w, &h, &this->fileId, this->img, IMG_SIZE, jpg, JPG_SIZE);
+    rc = capsaLoadAlbumScreenShotThumbnailImage(&w, &h, &this->fileId, img, IMG_SIZE, jpg, JPG_SIZE);
     free(jpg);
 
     if (R_FAILED(rc) || w != THUMB_WIDTH || h != THUMB_HEIGHT) {
@@ -63,12 +65,10 @@ tsl::elm::Element *MainGui::createUI() {
 
     auto *custElm = new tsl::elm::CustomDrawer([=](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
         /* Thumbnail */
-        if (this->img) {
-            u16 tmb_x = (w - THUMB_WIDTH) / 2;
-            u16 tmp_y = 110;
-            renderer->drawRect(tmb_x, tmp_y, THUMB_WIDTH, THUMB_HEIGHT, a(0xF000));
-            renderer->drawBitmap(tmb_x, tmp_y, THUMB_WIDTH, THUMB_HEIGHT, this->img);
-        }
+        u16 tmb_x = (w - THUMB_WIDTH) / 2;
+        u16 tmp_y = 110;
+        renderer->drawRect(tmb_x, tmp_y, THUMB_WIDTH, THUMB_HEIGHT, a(0xF000));
+        renderer->drawBitmap(tmb_x, tmp_y, THUMB_WIDTH, THUMB_HEIGHT, img);
 
         /* Meta */
         renderer->drawString(this->appId, false, 95, 340, 25, a(0xFFFF));
@@ -78,10 +78,7 @@ tsl::elm::Element *MainGui::createUI() {
         {
             static float counter = 0;
             const float progress = (std::sin(counter) + 1) / 2;
-            tsl::gfx::Color highlightColor = {static_cast<u8>((0x2 - 0x8) * progress + 0x8),
-                                              static_cast<u8>((0x8 - 0xF) * progress + 0xF),
-                                              static_cast<u8>((0xC - 0xF) * progress + 0xF),
-                                              0xF};
+            tsl::gfx::Color highlightColor = {static_cast<u8>((0x2 - 0x8) * progress + 0x8), static_cast<u8>((0x8 - 0xF) * progress + 0xF), static_cast<u8>((0xC - 0xF) * progress + 0xF), 0xF};
             counter += 0.1F;
 
             u16 btn_x = (w - 240) / 2;

@@ -24,7 +24,6 @@ constexpr size_t IMG_SIZE = THUMB_WIDTH * THUMB_HEIGHT * 4;
 
 class MainGui : public tsl::Gui {
   private:
-    u8 img[IMG_SIZE];
     char appId[0x11];
     char date[0x20];
     std::string url;

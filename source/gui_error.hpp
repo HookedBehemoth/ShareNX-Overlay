@@ -19,13 +19,18 @@
 #include <tesla.hpp>
 
 class ErrorGui : public tsl::Gui {
-private:
-	Result rc;
-	std::string msg;
+  private:
+    Result rc = 0;
+    char errorCode[10];
+    const char *msg = nullptr;
 
-public:
-	ErrorGui(Result result, const std::string &message);
-	~ErrorGui();
+  public:
+    ErrorGui(Result result, const char *message);
+    ~ErrorGui();
 
-	tsl::Element *createUI();
+    virtual tsl::elm::Element *createUI() override;
+
+    virtual void update() override {}
+
+    virtual bool handleInput(u64 down, u64 held, touchPosition pos, JoystickPosition left, JoystickPosition right) override;
 };

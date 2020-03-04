@@ -18,16 +18,26 @@
 #pragma once
 #include <tesla.hpp>
 
-class GuiMain : public tsl::Gui {
-private:
-	u8 *img = nullptr;
-	char appId[0x11];
-	char date[0x20];
-	bool uploaded = false;
+constexpr size_t THUMB_WIDTH = 320, THUMB_HEIGHT = 180;
+constexpr size_t JPG_SIZE = 0x80000;
+constexpr size_t IMG_SIZE = THUMB_WIDTH * THUMB_HEIGHT * 4;
 
-public:
-	GuiMain();
-	~GuiMain();
+class MainGui : public tsl::Gui {
+  private:
+    u8 img[IMG_SIZE];
+    char appId[0x11];
+    char date[0x20];
+    std::string url;
+    bool uploaded = false;
+    CapsAlbumFileId fileId;
 
-	virtual tsl::Element *createUI();
+  public:
+    MainGui();
+    ~MainGui();
+
+    virtual tsl::elm::Element *createUI() override;
+
+    virtual void update() override {}
+
+    virtual bool handleInput(u64 down, u64 held, touchPosition pos, JoystickPosition left, JoystickPosition right) override;
 };

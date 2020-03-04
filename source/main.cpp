@@ -15,66 +15,60 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <tesla.hpp>
-
+#define TESLA_INIT_IMPL
 #include "gui_error.hpp"
 #include "gui_main.hpp"
 
-class ShareOverlay : public tsl::Overlay {
-public:
-	ShareOverlay() {}
-	~ShareOverlay() {
-		smExit();
-		socketExit();
-		capsaExit();
-	}
+#define R_INIT(cmd)     \
+    rc = cmd;           \
+    if (R_FAILED(rc)) { \
+        msg = #cmd;     \
+        return;         \
+    }
 
-	tsl::Gui *onSetup() {
-		Result rc = smInitialize();
+constexpr SocketInitConfig sockConf = {
+    .bsdsockets_version = 1,
 
-		if (R_FAILED(rc)) {
-			return new ErrorGui(rc, "Failed to init sm!");
-		}
+    .tcp_tx_buf_size = 0x800,
+    .tcp_rx_buf_size = 0x800,
+    .tcp_tx_buf_max_size = 0x25000,
+    .tcp_rx_buf_max_size = 0x25000,
 
-		SocketInitConfig sockConf = {
-			.bsdsockets_version = 1,
+    .udp_tx_buf_size = 0,
+    .udp_rx_buf_size = 0,
 
-			.tcp_tx_buf_size = 0x800,
-			.tcp_rx_buf_size = 0x800,
-			.tcp_tx_buf_max_size = 0x25000,
-			.tcp_rx_buf_max_size = 0x25000,
+    .sb_efficiency = 1,
 
-			.udp_tx_buf_size = 0,
-			.udp_rx_buf_size = 0,
-
-			.sb_efficiency = 1,
-
-			.num_bsd_sessions = 0,
-			.bsd_service_type = BsdServiceType_Auto,
-		};
-		rc = socketInitialize(&sockConf);
-		if (R_FAILED(rc)) {
-			smExit();
-			return new ErrorGui(rc, "Socket init failed!");
-		}
-
-		rc = capsaInitialize();
-		if (R_FAILED(rc)) {
-			socketExit();
-			smExit();
-			return new ErrorGui(rc, "Failed to init CapSrv!");
-		}
-
-		return new GuiMain();
-	}
-
-	virtual void onDestroy() {
-		smExit();
-		socketExit();
-		capsaExit();
-	}
+    .num_bsd_sessions = 0,
+    .bsd_service_type = BsdServiceType_Auto,
 };
 
-tsl::Overlay *overlayLoad() {
-	return new ShareOverlay();
+class ShareOverlay : public tsl::Overlay {
+  public:
+    virtual void initServices() override {
+        R_INIT(socketInitialize(&sockConf));
+        R_INIT(capsaInitialize());
+    }
+    virtual void exitServices() override {
+        capsaExit();
+        socketExit();
+    }
+
+    virtual void onShow() override {}
+    virtual void onHide() override {}
+
+    virtual std::unique_ptr<tsl::Gui> loadInitialGui() override {
+        if (R_SUCCEEDED(rc))
+            return initially<MainGui>();
+        else
+            return initially<ErrorGui>(rc, msg);
+    }
+
+  private:
+    Result rc = 0;
+    const char *msg = "OK!";
+};
+
+int main(int argc, char **argv) {
+    return tsl::loop<ShareOverlay>(argc, argv);
 }

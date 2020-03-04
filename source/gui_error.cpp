@@ -17,35 +17,30 @@
  */
 #include "gui_error.hpp"
 
-class LastFrame : public tsl::element::Frame {
-public:
-	virtual bool onClick(s64 key) {
-		if (key == KEY_B) {
-			tsl::Gui::closeGui();
-			return true;
-		}
-
-		return false;
-	}
-};
-
-ErrorGui::ErrorGui(Result result, const std::string &message) : rc(result), msg(message) {}
+ErrorGui::ErrorGui(Result result, const char *message) : rc(result), msg(message) {
+    snprintf(this->errorCode, 10, "%04d-%04d", 2000 + R_MODULE(result), R_DESCRIPTION(result));
+}
 ErrorGui::~ErrorGui() {}
 
-tsl::Element *ErrorGui::createUI() {
-	this->setTitle("ShareNX");
-	this->setSubtitle("Behemoth, v1.0.0");
+tsl::elm::Element *ErrorGui::createUI() {
+    auto rootFrame = new tsl::elm::OverlayFrame("ShareNX", "v1.0.1");
 
-	auto root = new LastFrame();
-	auto error = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [&](u16 x, u16 y, tsl::Screen *screen) {
-		screen->drawString("\uE150", false, (FB_WIDTH - 90) / 2, 300, 90, tsl::a(0xFFFF));
-		screen->drawString(msg.c_str(), false, 105, 380, 25, tsl::a(0xFFFF));
-		if (rc != 0) {
-			char errorCode[10];
-			snprintf(errorCode, 10, "%04d-%04d", 2000 + R_MODULE(rc), R_DESCRIPTION(rc));
-			screen->drawString(errorCode, false, 120, 430, 25, tsl::a(0xFFFF));
-		}
-	});
-	root->addElement(error);
-	return root;
+    auto error = new tsl::elm::CustomDrawer([&](tsl::gfx::Renderer *screen, u16 x, u16 y, u16 w, u16 h) {
+        screen->drawString("\uE150", false, (w - 90) / 2, 300, 90, a(0xFFFF));
+        screen->drawString(this->msg, false, 105, 380, 25, a(0xFFFF));
+        if (this->rc != 0) {
+            screen->drawString(this->errorCode, false, 120, 430, 25, a(0xFFFF));
+        }
+    });
+
+    rootFrame->setContent(error);
+    return rootFrame;
+}
+
+bool ErrorGui::handleInput(u64 down, u64 held, touchPosition pos, JoystickPosition left, JoystickPosition right) {
+    if (down & KEY_B) {
+        tsl::Overlay::get()->close();
+        return true;
+    }
+    return false;
 }

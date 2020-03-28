@@ -6,7 +6,7 @@
 [subrepo]
 	remote = git@github.com:WerWolv/libtesla.git
 	branch = master
-	commit = 7ebad706f46f883a88fff66e6a8bba0c871d57c8
-	parent = 0622bc476356d0989a9239b7e3db98160c4532b9
+	commit = 3096165a713d0208ad398032df79df20a0e1eb60
+	parent = 1d73d2a98e7ed6a3791fce68276ffd259167663b
 	method = merge
 	cmdver = 0.4.1

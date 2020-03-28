@@ -17,30 +17,32 @@
  */
 #include "gui_error.hpp"
 
-ErrorGui::ErrorGui(Result result, const char *message) : rc(result), msg(message) {
-    snprintf(this->errorCode, 10, "%04d-%04d", 2000 + R_MODULE(result), R_DESCRIPTION(result));
+static char result_buffer[10];
+
+ErrorGui::ErrorGui(const char *msg)
+    : m_msg(msg), m_result() {}
+
+ErrorGui::ErrorGui(const char *msg, Result rc) {
+    std::snprintf(result_buffer, 10, "2%03d-%04d", R_MODULE(rc), R_DESCRIPTION(rc));
+    m_result = result_buffer;
 }
-ErrorGui::~ErrorGui() {}
 
 tsl::elm::Element *ErrorGui::createUI() {
-    auto rootFrame = new tsl::elm::OverlayFrame("ShareNX", "v1.0.1");
+    auto rootFrame = new tsl::elm::OverlayFrame("ovl-tune \u266B", VERSION);
 
-    auto error = new tsl::elm::CustomDrawer([&](tsl::gfx::Renderer *screen, u16 x, u16 y, u16 w, u16 h) {
-        screen->drawString("\uE150", false, (w - 90) / 2, 300, 90, a(0xFFFF));
-        screen->drawString(this->msg, false, 105, 380, 25, a(0xFFFF));
-        if (this->rc != 0) {
-            screen->drawString(this->errorCode, false, 120, 430, 25, a(0xFFFF));
-        }
+    auto *custom = new tsl::elm::CustomDrawer([&](tsl::gfx::Renderer *drawer, u16 x, u16 y, u16 w, u16 h) {
+        drawer->drawString("\uE150", false, (w - 90) / 2, 300, 90, 0xffff);
+        drawer->drawString(this->m_msg, false, 55, 380, 25, 0xffff);
+        if (this->m_result)
+            drawer->drawString(this->m_result, false, 120, 430, 25, 0xffff);
     });
 
-    rootFrame->setContent(error);
+    rootFrame->setContent(custom);
+
     return rootFrame;
 }
 
-bool ErrorGui::handleInput(u64 down, u64 held, touchPosition pos, JoystickPosition left, JoystickPosition right) {
-    if (down & KEY_B) {
-        tsl::Overlay::get()->close();
-        return true;
-    }
+void ErrorGui::update() {}
+bool ErrorGui::handleInput(u64, u64, touchPosition, JoystickPosition, JoystickPosition) {
     return false;
 }

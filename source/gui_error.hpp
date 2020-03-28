@@ -16,21 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
 #include <tesla.hpp>
 
 class ErrorGui : public tsl::Gui {
   private:
-    Result rc = 0;
-    char errorCode[10];
-    const char *msg = nullptr;
+    const char *m_msg;
+    const char *m_result;
 
   public:
-    ErrorGui(Result result, const char *message);
-    ~ErrorGui();
+    ErrorGui(const char *msg);
+    ErrorGui(const char *msg, Result rc);
 
     virtual tsl::elm::Element *createUI() override;
-
-    virtual void update() override {}
-
-    virtual bool handleInput(u64 down, u64 held, touchPosition pos, JoystickPosition left, JoystickPosition right) override;
+    virtual void update() override;
+    virtual bool handleInput(u64, u64, touchPosition, JoystickPosition, JoystickPosition) override;
 };

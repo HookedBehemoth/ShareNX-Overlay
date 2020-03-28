@@ -120,8 +120,15 @@ namespace tsl {
     };
 
     class Overlay;
+    namespace elm { class Element; }
 
     namespace impl { 
+
+        extern std::vector<tsl::elm::Element*> g_deletedElements;
+
+        static inline void reportDeletedElement(tsl::elm::Element *element) {
+            tsl::impl::g_deletedElements.push_back(element);
+        } 
         
         /**
          * @brief Overlay launch parameters
@@ -1068,7 +1075,9 @@ namespace tsl {
         class Element {
         public:
             Element() {}
-            virtual ~Element() {}
+            virtual ~Element() {
+                tsl::impl::reportDeletedElement(this);
+            }
 
             /**
              * @brief Handles focus requesting
@@ -1633,6 +1642,25 @@ namespace tsl {
             }
 
             virtual void draw(gfx::Renderer *renderer) override {
+                if (this->m_clearList) {
+                    for (auto& item : this->m_items)
+                        delete item;
+
+                    this->m_items.clear();
+                    this->m_offset = 0;
+                    this->m_focusedIndex = 0;
+                    this->invalidate();
+                    this->m_clearList = false;
+                }
+
+                for (auto &element : this->m_itemsToAdd) {
+                    element->invalidate();
+                    this->m_items.push_back(element);
+                    this->invalidate();
+                    this->updateScrollOffset();
+                }
+                this->m_itemsToAdd.clear();
+
                 renderer->enableScissoring(this->getX(), this->getY(), this->getWidth(), this->getHeight());
 
                 for (auto &entry : this->m_items) {
@@ -1642,6 +1670,12 @@ namespace tsl {
                 }
 
                 renderer->disableScissoring();
+
+                float scrollbarHeight = static_cast<float>(this->getHeight() * this->getHeight()) / this->m_listHeight;
+                float scrollbarOffset = (static_cast<double>(this->m_offset)) / static_cast<double>(this->m_listHeight - this->getHeight()) * (this->getHeight() - std::ceil(scrollbarHeight));
+                renderer->drawRect(this->getX() + this->getWidth() + 10, this->getY() + scrollbarOffset, 5, scrollbarHeight - 50, a(tsl::style::color::ColorHandle));
+                renderer->drawCircle(this->getX() + this->getWidth() + 12, this->getY() + scrollbarOffset, 2, true, a(tsl::style::color::ColorHandle));
+                renderer->drawCircle(this->getX() + this->getWidth() + 12, this->getY() + scrollbarOffset + scrollbarHeight - 50, 2, true, a(tsl::style::color::ColorHandle));
 
                 float prevOffset = this->m_offset;
                 this->m_offset += (this->m_nextOffset - this->m_offset) * 0.1F;
@@ -1665,7 +1699,7 @@ namespace tsl {
             }
 
             /**
-             * @brief Adds a new item to the list
+             * @brief Adds a new item to the list before the next frame starts
              * 
              * @param element Element to add
              * @param height Height of the element. Don't set this parameter for libtesla to try and figure out the size based on the type 
@@ -1677,29 +1711,25 @@ namespace tsl {
 
                     element->setParent(this);
                     element->invalidate();
-                    this->m_items.push_back(element);
-                    this->invalidate();
+
+                    this->m_itemsToAdd.push_back(element);
                 }
 
-                if (this->m_items.size() == 1)
-                    this->requestFocus(nullptr, FocusDirection::None);
-            }   
+            }
 
             /**
-             * @brief Removes all children from the list
+             * @brief Removes all children from the list later on
              * @warning When clearing a list, make sure none of the its children are focused. Call \ref Gui::removeFocus before.
              */
             virtual void clear() final {     
-                for (auto& item : this->m_items)
-                    delete item;
-
-                this->m_items.clear();
-                this->m_offset = 0;
-                this->m_focusedIndex = 0;
+                this->m_clearList = true;
             }
 
             virtual Element* requestFocus(Element *oldFocus, FocusDirection direction) override {
                 Element *newFocus = nullptr;
+
+                if (this->m_clearList || this->m_itemsToAdd.size() > 0)
+                    return nullptr;
 
                 if (direction == FocusDirection::None) {
                     for (u16 i = 0; i < this->m_items.size(); i++) {
@@ -1775,20 +1805,23 @@ namespace tsl {
             u32 m_listHeight = 0;
             u16 m_entriesShown = 5;
 
+            bool m_clearList = false;
+            std::vector<Element *> m_itemsToAdd;
+
         private:
 
             virtual void updateScrollOffset() {
-                /*this->m_nextOffset = 0;
+                this->m_nextOffset = 0;
                 for (u16 i = 0; i < this->m_focusedIndex; i++)
                     this->m_nextOffset += this->m_items[i]->getHeight();
 
-                this->m_nextOffset -= this->getHeight() / 4;
+                this->m_nextOffset -= this->getHeight() / 3;
                 
                 if (this->m_nextOffset < 0)
                     this->m_nextOffset = 0;
 
                 if (this->m_nextOffset > (this->m_listHeight - this->getHeight()) + 50)
-                    this->m_nextOffset = (this->m_listHeight - this->getHeight() + 50);*/
+                    this->m_nextOffset = (this->m_listHeight - this->getHeight() + 50);
             }
         };
 
@@ -1866,8 +1899,9 @@ namespace tsl {
             }
 
             virtual bool onClick(u64 keys) {
-                if (keys & KEY_A)
+                if (keys & KEY_A) {
                     this->triggerClickAnimation();
+                }
 
                 return Element::onClick(keys);
             }
@@ -2368,6 +2402,9 @@ namespace tsl {
          * @param renderer 
          */
         virtual void draw(gfx::Renderer *renderer) final {
+            if (this->getFocusedElement() == nullptr && this->getTopElement() != nullptr)
+                this->requestFocus(this->getTopElement(), tsl::FocusDirection::None);
+
             if (this->m_topElement != nullptr)
                 this->m_topElement->draw(renderer);
         }
@@ -2593,6 +2630,8 @@ namespace tsl {
 
             renderer.startFrame();
 
+            for (auto &deletedElement : tsl::impl::g_deletedElements)
+                this->getCurrentGui()->removeFocus(deletedElement);
 
             this->animationLoop();
             this->getCurrentGui()->update();
@@ -2622,16 +2661,19 @@ namespace tsl {
 
                     return;
                 }
-                else
-                    currentFocus = topElement;
+                else {
+                    currentFocus = topElement->requestFocus(nullptr, tsl::FocusDirection::None);
+                }
             }
+
 
             bool handled = false;
             elm::Element *parentElement = currentFocus;
-            do {
+
+            while (!handled && parentElement != nullptr) {
                 handled = parentElement->onClick(keysDown);
                 parentElement = parentElement->getParent();
-            } while (!handled && parentElement != nullptr);
+            }
 
             parentElement = currentFocus;
             do {
@@ -3086,7 +3128,10 @@ namespace tsl::cfg {
     u16 FramebufferWidth  = 0;
     u16 FramebufferHeight = 0;
     u64 launchCombo = KEY_L | KEY_DDOWN | KEY_RSTICK;
+}
 
+namespace tsl::impl {
+    std::vector<tsl::elm::Element*> g_deletedElements;
 }
 
 extern "C" {

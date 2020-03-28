@@ -18,16 +18,20 @@
 #pragma once
 #include <tesla.hpp>
 
-class GuiMain : public tsl::Gui {
-private:
-	u8 *img = nullptr;
-	char appId[0x11];
-	char date[0x20];
-	bool uploaded = false;
+#include "image_item.hpp"
 
-public:
-	GuiMain();
-	~GuiMain();
+class MainGui : public tsl::Gui {
+  private:
+    ImageItem *img;
+    std::string url;
+    bool uploaded = false;
+    CapsAlbumFileId fileId;
 
-	virtual tsl::Element *createUI();
+  public:
+    MainGui(const CapsAlbumFileId &fileId, const u8 *rgba_buffer);
+    ~MainGui();
+
+    virtual tsl::elm::Element *createUI() override;
+
+    virtual void update() override {}
 };

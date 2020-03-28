@@ -16,16 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
 #include <tesla.hpp>
 
 class ErrorGui : public tsl::Gui {
-private:
-	Result rc;
-	std::string msg;
+  private:
+    const char *m_msg;
+    const char *m_result;
 
-public:
-	ErrorGui(Result result, const std::string &message);
-	~ErrorGui();
+  public:
+    ErrorGui(const char *msg);
+    ErrorGui(Result rc);
 
-	tsl::Element *createUI();
+    virtual tsl::elm::Element *createUI() override;
 };

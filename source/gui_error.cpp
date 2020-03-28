@@ -17,35 +17,33 @@
  */
 #include "gui_error.hpp"
 
-class LastFrame : public tsl::element::Frame {
-public:
-	virtual bool onClick(s64 key) {
-		if (key == KEY_B) {
-			tsl::Gui::closeGui();
-			return true;
-		}
+static char result_buffer[10];
 
-		return false;
-	}
-};
+ErrorGui::ErrorGui(const char *msg)
+    : m_msg(msg), m_result() {}
 
-ErrorGui::ErrorGui(Result result, const std::string &message) : rc(result), msg(message) {}
-ErrorGui::~ErrorGui() {}
+ErrorGui::ErrorGui(Result rc) {
+    std::snprintf(result_buffer, 10, "2%03d-%04d", R_MODULE(rc), R_DESCRIPTION(rc));
+    m_result = result_buffer;
+}
 
-tsl::Element *ErrorGui::createUI() {
-	this->setTitle("ShareNX");
-	this->setSubtitle("Behemoth, v1.0.0");
+tsl::elm::Element *ErrorGui::createUI() {
+    auto rootFrame = new tsl::elm::OverlayFrame("ShareNX \uE134", VERSION);
 
-	auto root = new LastFrame();
-	auto error = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [&](u16 x, u16 y, tsl::Screen *screen) {
-		screen->drawString("\uE150", false, (FB_WIDTH - 90) / 2, 300, 90, tsl::a(0xFFFF));
-		screen->drawString(msg.c_str(), false, 105, 380, 25, tsl::a(0xFFFF));
-		if (rc != 0) {
-			char errorCode[10];
-			snprintf(errorCode, 10, "%04d-%04d", 2000 + R_MODULE(rc), R_DESCRIPTION(rc));
-			screen->drawString(errorCode, false, 120, 430, 25, tsl::a(0xFFFF));
-		}
-	});
-	root->addElement(error);
-	return root;
+    auto *custom = new tsl::elm::CustomDrawer([&](tsl::gfx::Renderer *drawer, u16 x, u16 y, u16 w, u16 h) {
+        static s32 msg_width = 0;
+        if (msg_width == 0) {
+            auto [width ,height] = drawer->drawString(this->m_msg, false, 0, 0, 25, tsl::style::color::ColorTransparent);
+            msg_width = width;
+        }
+        drawer->drawString("\uE150", false, x + ((w - 90) / 2), 300, 90, 0xffff);
+        drawer->drawString(this->m_msg, false, x + ((w - msg_width) / 2), 380, 25, 0xffff);
+        if (this->m_result) {
+            drawer->drawString(this->m_result, false, 120, 430, 25, 0xffff);
+        }
+    });
+
+    rootFrame->setContent(custom);
+
+    return rootFrame;
 }

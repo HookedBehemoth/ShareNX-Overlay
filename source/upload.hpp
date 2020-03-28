@@ -17,12 +17,11 @@
  */
 #pragma once
 
-#include <switch.h>
-
 #include <string>
+#include <switch.h>
 
 namespace web {
 
-std::string UploadImage(const CapsAlbumFileId &fileId);
+    std::string UploadImage(const CapsAlbumFileId &fileId);
 
 }

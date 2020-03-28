@@ -52,4 +52,3 @@ tsl::elm::Element *MainGui::createUI() {
 
     return rootFrame;
 }
-

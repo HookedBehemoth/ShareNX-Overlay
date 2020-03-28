@@ -38,14 +38,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	ShareNX
-APP_VERSION	:=	1.0.1
+APP_VERSION	:=	1.1.0
 
 TARGET		:=	ovlShareNX
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	libs/include
-APP_VERSION	:=	1.1.0
 
 ifeq ($(RELEASE),)
 	APP_VERSION	:=	$(APP_VERSION)-$(shell git describe --dirty --always)

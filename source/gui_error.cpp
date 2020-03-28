@@ -33,7 +33,7 @@ tsl::elm::Element *ErrorGui::createUI() {
     auto *custom = new tsl::elm::CustomDrawer([&](tsl::gfx::Renderer *drawer, u16 x, u16 y, u16 w, u16 h) {
         static s32 msg_width = 0;
         if (msg_width == 0) {
-            auto [width ,height] = drawer->drawString(this->m_msg, false, 0, 0, 25, tsl::style::color::ColorTransparent);
+            auto [width, height] = drawer->drawString(this->m_msg, false, 0, 0, 25, tsl::style::color::ColorTransparent);
             msg_width = width;
         }
         drawer->drawString("\uE150", false, x + ((w - 90) / 2), 300, 90, 0xffff);

@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:WerWolv/libtesla.git
+	branch = master
+	commit = 135651013eeffd012685c8d4a33a6922abafbfe8
+	parent = 80f2d4f461c8ec6fe0d7a068861cbabf3f3b6c2c
+	method = merge
+	cmdver = 0.4.1

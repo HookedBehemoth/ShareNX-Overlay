@@ -29,5 +29,4 @@ class ErrorGui : public tsl::Gui {
     ErrorGui(Result rc);
 
     virtual tsl::elm::Element *createUI() override;
-    virtual bool handleInput(u64, u64, touchPosition, JoystickPosition, JoystickPosition) override;
 };

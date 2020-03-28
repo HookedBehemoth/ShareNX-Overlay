@@ -20,50 +20,36 @@
 #include <string>
 
 #include "gui_error.hpp"
-#include "image_item.hpp"
 #include "upload.hpp"
 
 MainGui::MainGui(const CapsAlbumFileId &file_id, const u8 *rgba_buffer)
-    : fileId(file_id), buffer(rgba_buffer) {}
+    : fileId(file_id) {
+    img = new ImageItem(file_id, rgba_buffer);
+}
 
 MainGui::~MainGui() {}
 
 tsl::elm::Element *MainGui::createUI() {
-    auto rootFrame = new tsl::elm::OverlayFrame("ShareNX", "v1.0.1");
-
-    std::snprintf(this->appId, 0x11, "%016lX", this->fileId.application_id);
-
-    std::snprintf(this->date, 0x20, "%4d:%02d:%02d %02d:%02d:%02d",
-                  this->fileId.datetime.year,
-                  this->fileId.datetime.month,
-                  this->fileId.datetime.day,
-                  this->fileId.datetime.hour,
-                  this->fileId.datetime.minute,
-                  this->fileId.datetime.second);
+    auto rootFrame = new tsl::elm::OverlayFrame("ShareNX \uE134", VERSION);
 
     auto *list = new tsl::elm::List(2);
 
-    list->addItem(new ImageItem(this->buffer));
+    list->addItem(this->img);
 
     auto *button = new tsl::elm::ListItem("Upload");
     button->setClickListener([&](u64 keys) {
         if (keys && KEY_A && !this->uploaded) {
             this->url = web::UploadImage(this->fileId);
             this->uploaded = true;
-            list->addItemPostponed(new tsl::elm::ListItem(url));
+            list->addItem(new tsl::elm::ListItem(url));
             return true;
         }
         return false;
     });
     list->addItem(button);
-    list->addItem(new tsl::elm::ListItem(this->appId));
-    list->addItem(new tsl::elm::ListItem(this->date));
 
     rootFrame->setContent(list);
 
     return rootFrame;
 }
 
-bool MainGui::handleInput(u64, u64, touchPosition, JoystickPosition, JoystickPosition) {
-    return false;
-}

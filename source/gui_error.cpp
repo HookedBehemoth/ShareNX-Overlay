@@ -28,20 +28,22 @@ ErrorGui::ErrorGui(Result rc) {
 }
 
 tsl::elm::Element *ErrorGui::createUI() {
-    auto rootFrame = new tsl::elm::OverlayFrame("ovl-tune \u266B", VERSION);
+    auto rootFrame = new tsl::elm::OverlayFrame("ShareNX \uE134", VERSION);
 
     auto *custom = new tsl::elm::CustomDrawer([&](tsl::gfx::Renderer *drawer, u16 x, u16 y, u16 w, u16 h) {
-        drawer->drawString("\uE150", false, (w - 90) / 2, 300, 90, 0xffff);
-        drawer->drawString(this->m_msg, false, 55, 380, 25, 0xffff);
-        if (this->m_result)
+        static s32 msg_width = 0;
+        if (msg_width == 0) {
+            auto [width ,height] = drawer->drawString(this->m_msg, false, 0, 0, 25, tsl::style::color::ColorTransparent);
+            msg_width = width;
+        }
+        drawer->drawString("\uE150", false, x + ((w - 90) / 2), 300, 90, 0xffff);
+        drawer->drawString(this->m_msg, false, x + ((w - msg_width) / 2), 380, 25, 0xffff);
+        if (this->m_result) {
             drawer->drawString(this->m_result, false, 120, 430, 25, 0xffff);
+        }
     });
 
     rootFrame->setContent(custom);
 
     return rootFrame;
-}
-
-bool ErrorGui::handleInput(u64, u64, touchPosition, JoystickPosition, JoystickPosition) {
-    return false;
 }

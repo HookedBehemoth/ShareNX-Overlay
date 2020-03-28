@@ -39,9 +39,9 @@ tsl::elm::Element *MainGui::createUI() {
     auto *button = new tsl::elm::ListItem("Upload");
     button->setClickListener([&](u64 keys) {
         if (keys && KEY_A && !this->uploaded) {
-            this->url = web::UploadImage(this->fileId);
+            std::string url = web::UploadImage(this->fileId);
             this->uploaded = true;
-            list->addItem(new tsl::elm::ListItem(url));
+            this->img->setUrl(url);
             return true;
         }
         return false;

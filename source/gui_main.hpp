@@ -23,7 +23,6 @@
 class MainGui : public tsl::Gui {
   private:
     ImageItem *img;
-    std::string url;
     bool uploaded = false;
     CapsAlbumFileId fileId;
 

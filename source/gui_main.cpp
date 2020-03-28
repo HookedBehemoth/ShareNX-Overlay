@@ -32,7 +32,7 @@ MainGui::~MainGui() {}
 tsl::elm::Element *MainGui::createUI() {
     auto rootFrame = new tsl::elm::OverlayFrame("ShareNX \uE134", VERSION);
 
-    auto *list = new tsl::elm::List(2);
+    auto *list = new tsl::elm::List();
 
     list->addItem(this->img);
 

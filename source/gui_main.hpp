@@ -18,10 +18,6 @@
 #pragma once
 #include <tesla.hpp>
 
-constexpr size_t THUMB_WIDTH = 320, THUMB_HEIGHT = 180;
-constexpr size_t JPG_SIZE = 0x80000;
-constexpr size_t IMG_SIZE = THUMB_WIDTH * THUMB_HEIGHT * 4;
-
 class MainGui : public tsl::Gui {
   private:
     char appId[0x11];
@@ -29,9 +25,10 @@ class MainGui : public tsl::Gui {
     std::string url;
     bool uploaded = false;
     CapsAlbumFileId fileId;
+    const u8 *buffer;
 
   public:
-    MainGui();
+    MainGui(const CapsAlbumFileId& fileId, const u8 *rgba_buffer);
     ~MainGui();
 
     virtual tsl::elm::Element *createUI() override;

@@ -7,7 +7,7 @@
                 "/opt/devkitpro/devkitA64/lib/gcc/aarch64-none-elf/8.3.0/include/**",
                 "/opt/devkitpro/libnx/include/**",
                 "/opt/devkitpro/portlibs/switch/include/**",
-                "libs/libtesla/**"
+                "libs/include/**"
             ],
             "defines": [
                 "SWITCH",

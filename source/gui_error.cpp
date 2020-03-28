@@ -22,7 +22,7 @@ static char result_buffer[10];
 ErrorGui::ErrorGui(const char *msg)
     : m_msg(msg), m_result() {}
 
-ErrorGui::ErrorGui(const char *msg, Result rc) {
+ErrorGui::ErrorGui(Result rc) {
     std::snprintf(result_buffer, 10, "2%03d-%04d", R_MODULE(rc), R_DESCRIPTION(rc));
     m_result = result_buffer;
 }
@@ -42,7 +42,6 @@ tsl::elm::Element *ErrorGui::createUI() {
     return rootFrame;
 }
 
-void ErrorGui::update() {}
 bool ErrorGui::handleInput(u64, u64, touchPosition, JoystickPosition, JoystickPosition) {
     return false;
 }

@@ -1422,7 +1422,7 @@ namespace tsl {
              * 
              * @param renderFunc Callback that will be called once every frame to draw this view
              */
-            CustomDrawer(std::function<void(gfx::Renderer* r, u16 x, u16 y, u16 w, u16 h)> renderFunc) : Element(), m_renderFunc(renderFunc) {}
+            CustomDrawer(std::function<void(gfx::Renderer* r, s32 x, s32 y, s32 w, s32 h)> renderFunc) : Element(), m_renderFunc(renderFunc) {}
             virtual ~CustomDrawer() {}
 
             virtual void draw(gfx::Renderer* renderer) override {
@@ -1436,7 +1436,7 @@ namespace tsl {
             }
 
         private:
-            std::function<void(gfx::Renderer*, u16 x, u16 y, u16 w, u16 h)> m_renderFunc;
+            std::function<void(gfx::Renderer*, s32 x, s32 y, s32 w, s32 h)> m_renderFunc;
         };
 
 
@@ -2141,12 +2141,15 @@ namespace tsl {
 
         class CategoryHeader : public ListItem {
         public:
-            CategoryHeader(const std::string &title) : ListItem(title) {}
+            CategoryHeader(const std::string &title, bool hasSeparator = false) : ListItem(title), m_hasSeparator(hasSeparator) {}
             virtual ~CategoryHeader() {}
 
             virtual void draw(gfx::Renderer *renderer) override {
                 renderer->drawRect(this->getX() - 2, this->getY() + this->getHeight() - 30, 5, 23, a(tsl::style::color::ColorHeaderBar));
                 renderer->drawString(this->m_text.c_str(), false, this->getX() + 13, this->getY() + this->getHeight() - 12, 15, a(tsl::style::color::ColorText));
+
+                if (this->m_hasSeparator)
+                    renderer->drawRect(this->getX(), this->getY() + this->getHeight(), this->getWidth(), 1, a(tsl::style::color::ColorFrame));
             }
 
             virtual void layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) override {
@@ -2168,10 +2171,13 @@ namespace tsl {
             virtual Element* requestFocus(Element *oldFocus, FocusDirection direction) override {
                 return nullptr;
             }
+
+        private:
+            bool m_hasSeparator;
         };
 
         /**
-         * @brief A customizable analog trackbar going from 0% to 100%
+         * @brief A customizable analog trackbar going from 0% to 100% (like the brightness slider)
          * 
          */
         class TrackBar : public ListItem {
@@ -2179,16 +2185,16 @@ namespace tsl {
             /**
              * @brief Constructor
              * 
-             * @param text Initial description text
-             * @param initialState Is the toggle set to On or Off initially
-             * @param onValue Value drawn if the toggle is on
-             * @param offValue Value drawn if the toggle is off
+             * @param icon Icon shown next to the track bar
              */
             TrackBar(const char icon[3]) : ListItem(icon), m_icon(icon) { }
 
             virtual ~TrackBar() {}
 
             virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+                if (keysHeld & KEY_LEFT && keysHeld & KEY_RIGHT)
+                    return true;
+
                 if (keysHeld & KEY_LEFT) {
                     if (this->m_value > 0) {
                         this->m_value--;
@@ -2337,40 +2343,47 @@ namespace tsl {
             virtual inline void setValue(const std::string& value, bool faint = false) {}
         };
 
+
+        /**
+         * @brief A customizable analog trackbar going from 0% to 100% but using discrete steps (Like the volume slider)
+         * 
+         */
         class StepTrackBar : public TrackBar {
         public:
             /**
              * @brief Constructor
              * 
-             * @param text Initial description text
-             * @param initialState Is the toggle set to On or Off initially
-             * @param onValue Value drawn if the toggle is on
-             * @param offValue Value drawn if the toggle is off
+             * @param icon Icon shown next to the track bar
+             * @param numSteps Number of steps the track bar has
              */
-            StepTrackBar(const char icon[3], std::initializer_list<std::string> stepDescriptions) 
-                : TrackBar(icon), m_numSteps(stepDescriptions.size()), m_stepDescriptions(stepDescriptions.begin(), stepDescriptions.end()) { }
+            StepTrackBar(const char icon[3], size_t numSteps)
+                : TrackBar(icon), m_numSteps(numSteps) { }
 
             virtual ~StepTrackBar() {}
 
             virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-                return false;
-            }
+                static u32 tick = 0;
 
-            virtual bool onClick(u64 key) {
-                if (key & KEY_LEFT) {
-                    if (this->m_value > 0) {
-                        this->m_value = std::max(this->m_value - (100 / (this->m_numSteps - 1)), 0);
-                        this->m_valueChangedListener(this->getProgress());
-                        return true;
-                    }
+                if (keysHeld & KEY_LEFT && keysHeld & KEY_RIGHT) {
+                    tick = 0;
+                    return true;
                 }
 
-                if (key & KEY_RIGHT) {
-                    if (this->m_value < 100) {
-                        this->m_value = std::min(this->m_value + (100 / (this->m_numSteps - 1)), 100);
+                if (keysHeld & (KEY_LEFT | KEY_RIGHT)) {
+                    if ((tick == 0 || tick > 20) && (tick % 3) == 0) {
+                        if (keysHeld & KEY_LEFT && this->m_value > 0) {
+                            this->m_value = std::max(this->m_value - (100 / (this->m_numSteps - 1)), 0);
+                        } else if (keysHeld & KEY_RIGHT && this->m_value < 100) {
+                            this->m_value = std::min(this->m_value + (100 / (this->m_numSteps - 1)), 100);
+                        } else {
+                            return false;
+                        }
                         this->m_valueChangedListener(this->getProgress());
-                        return true;
                     }
+                    tick++;
+                    return true;
+                } else {
+                    tick = 0;
                 }
 
                 return false;
@@ -2396,23 +2409,6 @@ namespace tsl {
                 return false;
             }
 
-            virtual void draw(gfx::Renderer *renderer) override {
-
-                u16 trackBarWidth = this->getWidth() - 95;
-                u16 stepWidth = trackBarWidth / (this->m_numSteps - 1);
-
-                for (u8 i = 0; i < this->m_numSteps; i++) {
-                    renderer->drawRect(this->getX() + 60 + stepWidth * i, this->getY() + 50, 1, 10, a(tsl::style::color::ColorFrame));
-                }
-
-                u8 currentDescIndex = std::clamp(this->m_value / (100 / (this->m_numSteps - 1)), 0, this->m_numSteps - 1);
-
-                auto [descWidth, descHeight] = renderer->drawString(this->m_stepDescriptions[currentDescIndex].c_str(), false, 0, 0, 15, tsl::style::color::ColorTransparent);
-                renderer->drawString(this->m_stepDescriptions[currentDescIndex].c_str(), false, ((this->getX() + 60) + (this->getWidth() - 95) / 2) - (descWidth / 2), this->getY() + 20, 15, a(tsl::style::color::ColorDescription));
-
-                TrackBar::draw(renderer);
-            }
-
             /**
              * @brief Gets the current value of the trackbar
              * 
@@ -2434,6 +2430,44 @@ namespace tsl {
 
         protected:
             u8 m_numSteps = 1;
+        };
+
+
+        /**
+         * @brief A customizable trackbar with multiple discrete steps with specific names. Name gets displayed above the bar
+         * 
+         */
+        class NamedStepTrackBar : public StepTrackBar {
+        public:
+            /**
+             * @brief Constructor
+             * 
+             * @param icon Icon shown next to the track bar
+             * @param stepDescriptions Step names displayed above the track bar
+             */
+            NamedStepTrackBar(const char icon[3], std::initializer_list<std::string> stepDescriptions) 
+                : StepTrackBar(icon, stepDescriptions.size()), m_stepDescriptions(stepDescriptions.begin(), stepDescriptions.end()) { }
+
+            virtual ~NamedStepTrackBar() {}
+
+            virtual void draw(gfx::Renderer *renderer) override {
+
+                u16 trackBarWidth = this->getWidth() - 95;
+                u16 stepWidth = trackBarWidth / (this->m_numSteps - 1);
+
+                for (u8 i = 0; i < this->m_numSteps; i++) {
+                    renderer->drawRect(this->getX() + 60 + stepWidth * i, this->getY() + 50, 1, 10, a(tsl::style::color::ColorFrame));
+                }
+
+                u8 currentDescIndex = std::clamp(this->m_value / (100 / (this->m_numSteps - 1)), 0, this->m_numSteps - 1);
+
+                auto [descWidth, descHeight] = renderer->drawString(this->m_stepDescriptions[currentDescIndex].c_str(), false, 0, 0, 15, tsl::style::color::ColorTransparent);
+                renderer->drawString(this->m_stepDescriptions[currentDescIndex].c_str(), false, ((this->getX() + 60) + (this->getWidth() - 95) / 2) - (descWidth / 2), this->getY() + 20, 15, a(tsl::style::color::ColorDescription));
+
+                StepTrackBar::draw(renderer);
+            }
+
+        protected:
             std::vector<std::string> m_stepDescriptions;
         };
 
@@ -2508,7 +2542,7 @@ namespace tsl {
          * @param element Element to focus
          * @param direction Focus direction
          */
-        virtual void requestFocus(elm::Element *element, FocusDirection direction) final {
+        virtual void requestFocus(elm::Element *element, FocusDirection direction, bool shake = true) final {
             elm::Element *oldFocus = this->m_focusedElement;
 
             if (element != nullptr) {
@@ -2522,7 +2556,7 @@ namespace tsl {
                 }
             }
 
-            if (oldFocus == this->m_focusedElement && this->m_focusedElement != nullptr)
+            if (shake && oldFocus == this->m_focusedElement && this->m_focusedElement != nullptr)
                 this->m_focusedElement->shakeHighlight(direction);
         }
 
@@ -2821,6 +2855,7 @@ namespace tsl {
             static touchPosition oldTouchPos = { 0 };
             static bool oldTouchDetected = false;
             static elm::TouchEvent touchEvent;
+            static u32 repeatTick = 0;
             
             auto& currentGui = this->getCurrentGui();
 
@@ -2842,6 +2877,7 @@ namespace tsl {
                     if (!currentGui->initialFocusSet() || keysDown & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT)) {
                         currentGui->requestFocus(topElement, FocusDirection::None);
                         currentGui->markInitialFocusSet();
+                        repeatTick = 1;
                     }
                 }
             }
@@ -2866,16 +2902,28 @@ namespace tsl {
             handled = handled | currentGui->handleInput(keysDown, keysHeld, touchPos, joyStickPosLeft, joyStickPosRight);
 
             if (!handled && currentFocus != nullptr) {
-                if (keysDown & KEY_UP)
-                    currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Up);
-                else if (keysDown & KEY_DOWN)
-                    currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Down);
-                else if (keysDown & KEY_LEFT)
-                    currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Left);
-                else if (keysDown & KEY_RIGHT)
-                    currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Right);
-                else if (keysDown & KEY_B) 
-                    this->goBack();
+                static bool shouldShake = true;
+
+                if ((((keysHeld & KEY_UP) != 0) + ((keysHeld & KEY_DOWN) != 0) + ((keysHeld & KEY_LEFT) != 0) + ((keysHeld & KEY_RIGHT) != 0)) == 1) {
+                    if ((repeatTick == 0 || repeatTick > 20) && (repeatTick % 4) == 0) {
+                        if (keysHeld & KEY_UP)
+                            currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Up, shouldShake);
+                        else if (keysHeld & KEY_DOWN)
+                            currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Down, shouldShake);
+                        else if (keysHeld & KEY_LEFT)
+                            currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Left, shouldShake);
+                        else if (keysHeld & KEY_RIGHT)
+                            currentGui->requestFocus(currentFocus->getParent(), FocusDirection::Right, shouldShake);
+
+                        shouldShake = currentGui->getFocusedElement() != currentFocus;
+                    }
+                    repeatTick++;
+                } else {
+                    if (keysDown & KEY_B)
+                        this->goBack();
+                    repeatTick = 0;
+                    shouldShake = true;
+                }
             }
 
             if (!touchDetected && oldTouchDetected) {
@@ -3143,7 +3191,7 @@ namespace tsl {
                 }
 
                 //20 ms
-                svcSleepThread(20E6);
+                svcSleepThread(20'000'000ul);
             }
         }
 

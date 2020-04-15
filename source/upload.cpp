@@ -33,29 +33,30 @@ namespace web {
         u64 size = 0;
         Result rc = capsaGetAlbumFileSize(&fileId, &size);
         if (R_FAILED(rc))
-            return "can't get size";
+            return "Can't get Filesize";
 
-        void *imgBuffer = malloc(size);
-        if (!imgBuffer)
-            return "malloc failed";
+        char *imgBuffer = new (std::nothrow) char[size];
+        if (imgBuffer == nullptr)
+            return "Memory allocation failed";
+
+        tsl::hlp::ScopeGuard buffer_guard([imgBuffer] { delete[] imgBuffer; });
 
         u64 actualSize = 0;
         rc = capsaLoadAlbumFile(&fileId, &actualSize, imgBuffer, size);
         if (R_FAILED(rc)) {
-            free(imgBuffer);
-            return "failed to load img";
+            return "Failed to load Image";
         }
 
         CURL *curl = curl_easy_init();
-        if (!curl)
-            return "failed to start curl";
+        if (curl == nullptr)
+            return "Failed to init curl";
 
         curl_mime *mime = curl_mime_init(curl);
         curl_mimepart *file_part = curl_mime_addpart(mime);
 
         curl_mime_filename(file_part, "switch.jpg");
         curl_mime_name(file_part, "fileToUpload");
-        curl_mime_data(file_part, (const char *)imgBuffer, actualSize);
+        curl_mime_data(file_part, imgBuffer, actualSize);
 
         curl_mimepart *part = curl_mime_addpart(mime);
         curl_mime_name(part, "curl");
@@ -79,14 +80,12 @@ namespace web {
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
         if (res != CURLE_OK) {
-            urlresponse = "curl failed " + std::to_string(res);
+            urlresponse = "Curl failed " + std::to_string(res);
         } else if (http_code != 200) {
-            urlresponse = "failed with " + std::to_string(http_code);
+            urlresponse = "Failed with " + std::to_string(http_code);
         } else if (urlresponse.size() > 0x30) {
-            urlresponse = "result too long";
+            urlresponse = "Result too long";
         }
-
-        free(imgBuffer);
 
         curl_mime_free(mime);
         curl_easy_cleanup(curl);

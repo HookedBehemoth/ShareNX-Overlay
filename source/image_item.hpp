@@ -20,8 +20,8 @@
 #include <tesla.hpp>
 
 constexpr size_t THUMB_WIDTH = 320, THUMB_HEIGHT = 180;
-constexpr size_t JPG_SIZE = 0x80000;
-constexpr size_t IMG_SIZE = THUMB_WIDTH * THUMB_HEIGHT * 4;
+constexpr size_t THUMB_SIZE = THUMB_WIDTH * THUMB_HEIGHT * 4;
+constexpr size_t WORK_SIZE = 0x10000;
 
 class ImageItem : public tsl::elm::ListItem {
   private:

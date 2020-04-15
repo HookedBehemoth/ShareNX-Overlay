@@ -44,7 +44,7 @@ constexpr const SocketInitConfig sockConf = {
     .bsd_service_type = BsdServiceType_Auto,
 };
 
-static u8 img[IMG_SIZE];
+static u8 img[THUMB_SIZE];
 
 class ShareOverlay : public tsl::Overlay {
   private:
@@ -58,22 +58,21 @@ class ShareOverlay : public tsl::Overlay {
         R_INIT(capsaInitialize(), "Failed to init capture service!");
 
         u64 size;
-        rc = capsaGetLastOverlayScreenShotThumbnail(&this->fileId, &size, img, IMG_SIZE);
+        rc = capsaGetLastOverlayScreenShotThumbnail(&this->fileId, &size, img, THUMB_SIZE);
         if (R_FAILED(rc) || size == 0 || this->fileId.application_id == 0) {
             msg = "No screenshot taken!";
             return;
         }
 
-        void *jpg = malloc(JPG_SIZE);
-        if (!jpg) {
+        u8 *work = new (std::nothrow) u8[WORK_SIZE];
+        if (work == nullptr) {
             msg = "Out of memory!";
             return;
         }
+        tsl::hlp::ScopeGuard work_guard([work] { delete[] work; });
 
         u64 w, h;
-        rc = capsaLoadAlbumScreenShotThumbnailImage(&w, &h, &this->fileId, img, IMG_SIZE, jpg, JPG_SIZE);
-        free(jpg);
-
+        rc = capsaLoadAlbumScreenShotThumbnailImage(&w, &h, &this->fileId, img, THUMB_SIZE, work, WORK_SIZE);
         if (R_FAILED(rc) || w != THUMB_WIDTH || h != THUMB_HEIGHT) {
             msg = "CapSrv error!";
             return;

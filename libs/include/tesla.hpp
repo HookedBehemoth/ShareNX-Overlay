@@ -89,27 +89,41 @@ namespace tsl {
         extern u16 FramebufferWidth;            ///< Width of the framebuffer
         extern u16 FramebufferHeight;           ///< Height of the framebuffer
         extern u64 launchCombo;                 ///< Overlay activation key combo
-        extern u64 captureCombo;                ///< Screenshot key combo
-        extern bool captureComboEnabled;        ///< Screenshot enabled
 
     }
 
+    /**
+     * @brief RGBA4444 Color structure
+     */
+    struct Color {
+
+        union {
+            struct {
+                u16 r: 4, g: 4, b: 4, a: 4;
+            } PACKED;
+            u16 rgba;
+        };
+
+        constexpr inline Color(u16 raw): rgba(raw) {}
+        constexpr inline Color(u8 r, u8 g, u8 b, u8 a): r(r), g(g), b(b), a(a) {}
+    };
+
     namespace style {
-        constexpr u32 ListItemDefaultHeight = 70;       ///< Standard list item height
-        constexpr u32 TrackBarDefaultHeight = 90;      ///< Standard track bar height
-        constexpr u8 ListItemHighlightSaturation = 0x6; ///< Maximum saturation of Listitem highlights
-        constexpr u8 ListItemHighlightLength = 22;      ///< Maximum length of Listitem highlights
+        constexpr u32 ListItemDefaultHeight         = 70;       ///< Standard list item height
+        constexpr u32 TrackBarDefaultHeight         = 90;       ///< Standard track bar height
+        constexpr u8  ListItemHighlightSaturation   = 6;        ///< Maximum saturation of Listitem highlights
+        constexpr u8  ListItemHighlightLength       = 22;       ///< Maximum length of Listitem highlights
 
         namespace color {
-            constexpr u16 ColorFrameBackground  = 0xD000;   ///< Overlay frame background color
-            constexpr u16 ColorTransparent      = 0x0000;   ///< Transparent color
-            constexpr u16 ColorHighlight        = 0xFDF0;   ///< Greenish highlight color
-            constexpr u16 ColorFrame            = 0xF777;   ///< Outer boarder color
-            constexpr u16 ColorHandle           = 0xF555;   ///< Track bar handle color
-            constexpr u16 ColorText             = 0xFFFF;   ///< Standard text color
-            constexpr u16 ColorDescription      = 0xFAAA;   ///< Description text color
-            constexpr u16 ColorHeaderBar        = 0xFCCC;   ///< Category header rectangle color
-            constexpr u16 ColorClickAnimation   = 0xF220;
+            constexpr Color ColorFrameBackground  = { 0x0, 0x0, 0x0, 0xD };   ///< Overlay frame background color
+            constexpr Color ColorTransparent      = { 0x0, 0x0, 0x0, 0x0 };   ///< Transparent color
+            constexpr Color ColorHighlight        = { 0x0, 0xF, 0xD, 0xF };   ///< Greenish highlight color
+            constexpr Color ColorFrame            = { 0x7, 0x7, 0x7, 0xF };   ///< Outer boarder color
+            constexpr Color ColorHandle           = { 0x5, 0x5, 0x5, 0xF };   ///< Track bar handle color
+            constexpr Color ColorText             = { 0xF, 0xF, 0xF, 0xF };   ///< Standard text color
+            constexpr Color ColorDescription      = { 0xA, 0xA, 0xA, 0xF };   ///< Description text color
+            constexpr Color ColorHeaderBar        = { 0xC, 0xC, 0xC, 0xF };   ///< Category header rectangle color
+            constexpr Color ColorClickAnimation   = { 0x0, 0x2, 0x2, 0xF };   ///< Element click animation color
         }
     }
 
@@ -229,55 +243,6 @@ namespace tsl {
                 ALWAYS_INLINE ~ScopeGuard() { if (f) { f(); } }
                 void dismiss() { f = nullptr; }
         };
-
-        /**
-         * @brief Capture the whole screen with overlays
-         * @note this allocates 0x7D301 bytes of heap memory so make sure you have that.
-         * 
-         * @return Result Result
-         */
-        static Result captureScreen() {
-            /* Allocate buffer for jpeg. */
-            size_t buffer_size = 0x7D000;
-            u8 *buffer = new u8[buffer_size];
-            ScopeGuard buffer_guard([buffer] { delete[] buffer; });
-
-            /* Capture current screen. */
-            u64 size;
-            struct {
-                u32 a;
-                u64 b;
-            } in = {0, 10000000000};
-            R_TRY(serviceDispatchInOut(capsscGetServiceSession(), 1204, in, size,
-                .buffer_attrs = {SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out},
-                .buffers = { { buffer, buffer_size } },
-            ));
-
-            /* Open Sd card filesystem. */
-            FsFileSystem sdmc;
-            R_TRY(fsOpenSdCardFileSystem(&sdmc));
-            ScopeGuard sdmc_guard([&sdmc] { fsFsClose(&sdmc); });
-
-            /* Allocate path buffer. */
-            char *pathBuffer = new char[FS_MAX_PATH];
-            ScopeGuard path_guard([pathBuffer] { delete[] pathBuffer; });
-
-            /* Get unique filepath. */
-            u64 timestamp=0;
-            Result rc = timeGetCurrentTime(TimeType_Default, &timestamp);
-            if (R_SUCCEEDED(rc)) std::snprintf(pathBuffer, FS_MAX_PATH, "/libtesla_%ld.jpg", timestamp);
-            else std::strcpy(pathBuffer, "/libtesla_screenshot.jpg");
-
-            /* Create file, open and write to it. */
-            fsFsDeleteFile(&sdmc, pathBuffer);
-            R_TRY(fsFsCreateFile(&sdmc, pathBuffer, size, 0));
-            FsFile file;
-            R_TRY(fsFsOpenFile(&sdmc, pathBuffer, FsOpenMode_Write, &file));
-            fsFileWrite(&file, 0, buffer, size, FsWriteOption_Flush);
-            fsFileClose(&file);
-
-            return 0;
-        }
 
         /**
          * @brief libnx hid:sys shim that gives or takes away frocus to or from the process with the given aruid
@@ -470,10 +435,6 @@ namespace tsl {
 
         }
 
-        static bool stringToBool(const std::string &value) {
-            return (value == "true") || (value == "1");
-        }
-
         /**
          * @brief Decodes a key string into it's key code
          * 
@@ -527,22 +488,6 @@ namespace tsl {
     namespace gfx {
 
         extern "C" u64 __nx_vi_layer_id;
-
-        /**
-         * @brief RGBA4444 Color structure
-         */
-        struct Color {
-
-            union {
-                struct {
-                    u16 r: 4, g: 4, b: 4, a: 4;
-                } PACKED;
-                u16 rgba;
-            };
-
-            inline Color(u16 raw): rgba(raw) {}
-            inline Color(u8 r, u8 g, u8 b, u8 a): r(r), g(g), b(b), a(a) {}
-        };
 
         struct ScissoringConfig {
             s32 x, y, w, h;
@@ -1317,7 +1262,7 @@ namespace tsl {
              * @param renderer Renderer
              */
             virtual void drawClickAnimation(gfx::Renderer *renderer) {
-                gfx::Color animColor = tsl::style::color::ColorClickAnimation;
+                Color animColor = tsl::style::color::ColorClickAnimation;
                 u8 saturation = tsl::style::ListItemHighlightSaturation * (float(this->m_clickAnimationProgress) / float(tsl::style::ListItemHighlightLength));
 
                 animColor.g = saturation;
@@ -1350,7 +1295,7 @@ namespace tsl {
             virtual void drawHighlight(gfx::Renderer *renderer) {
                 static float counter = 0;
                 const float progress = (std::sin(counter) + 1) / 2;
-                gfx::Color highlightColor = {   static_cast<u8>((0x2 - 0x8) * progress + 0x8),
+                Color highlightColor = {   static_cast<u8>((0x2 - 0x8) * progress + 0x8),
                                                 static_cast<u8>((0x8 - 0xF) * progress + 0xF), 
                                                 static_cast<u8>((0xC - 0xF) * progress + 0xF), 
                                                 0xF };
@@ -1768,7 +1713,7 @@ namespace tsl {
              * 
              * @param color Color of the rectangle
              */
-            DebugRectangle(gfx::Color color) : Element(), m_color(color) {}
+            DebugRectangle(Color color) : Element(), m_color(color) {}
             virtual ~DebugRectangle() {}
 
             virtual void draw(gfx::Renderer *renderer) override {
@@ -1778,7 +1723,7 @@ namespace tsl {
             virtual void layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) override {}
 
         private:
-            gfx::Color m_color;
+            Color m_color;
         };
 
 
@@ -2492,7 +2437,7 @@ namespace tsl {
             virtual void drawHighlight(gfx::Renderer *renderer) override {
                 static float counter = 0;
                 const float progress = (std::sin(counter) + 1) / 2;
-                gfx::Color highlightColor = {   static_cast<u8>((0x2 - 0x8) * progress + 0x8),
+                Color highlightColor = {   static_cast<u8>((0x2 - 0x8) * progress + 0x8),
                                                 static_cast<u8>((0x8 - 0xF) * progress + 0xF), 
                                                 static_cast<u8>((0xC - 0xF) * progress + 0xF), 
                                                 static_cast<u8>((0x6 - 0xD) * progress + 0xD) };
@@ -3338,12 +3283,6 @@ namespace tsl {
             u64 decodedKeys = hlp::comboStringToKeys(parsedConfig["tesla"]["key_combo"]);
             if (decodedKeys)
                 tsl::cfg::launchCombo = decodedKeys;
-
-            decodedKeys = hlp::comboStringToKeys(parsedConfig["tesla"]["screenshot_combo"]);
-            if (decodedKeys)
-                tsl::cfg::captureCombo = decodedKeys;
-
-            tsl::cfg::captureComboEnabled = hlp::stringToBool(parsedConfig["tesla"]["screenshot_combo_enabled"]);
         }
 
         /**
@@ -3441,10 +3380,6 @@ namespace tsl {
                         }
                         else
                             eventFire(&shData->comboEvent);
-                    }
-
-                    if (shData->overlayOpen && tsl::cfg::captureComboEnabled && ((shData->keysHeld & tsl::cfg::captureCombo) == tsl::cfg::captureCombo) && shData->keysDown & tsl::cfg::captureCombo) {
-                        tsl::hlp::captureScreen();
                     }
 
                     shData->keysDownPending |= shData->keysDown;
@@ -3660,13 +3595,12 @@ namespace tsl::cfg {
     u16 FramebufferWidth  = 0;
     u16 FramebufferHeight = 0;
     u64 launchCombo = KEY_L | KEY_DDOWN | KEY_RSTICK;
-    u64 captureCombo = KEY_PLUS | KEY_MINUS;
-    bool captureComboEnabled = false;
 }
 
 extern "C" {
 
     u32 __nx_applet_type = AppletType_None;
+    u32 __nx_fs_num_sessions = 1;
     u32  __nx_nv_transfermem_size = 0x40000;
     ViLayerFlags __nx_vi_stray_layer_flags = (ViLayerFlags)0;
 
@@ -3676,8 +3610,6 @@ extern "C" {
      */
     void __appInit(void) {
         tsl::hlp::doWithSmSession([]{
-            ASSERT_FATAL(capsscInitialize());
-            ASSERT_FATAL(timeInitialize());
             ASSERT_FATAL(fsInitialize());
             ASSERT_FATAL(hidInitialize());                          // Controller inputs and Touch
             ASSERT_FATAL(plInitialize());                           // Font data. Use pl:s to prevent qlaunch/overlaydisp session exhaustion
@@ -3692,8 +3624,6 @@ extern "C" {
      * 
      */
     void __appExit(void) {
-        capsscExit();
-        timeExit();
         fsExit();
         hidExit();
         plExit();

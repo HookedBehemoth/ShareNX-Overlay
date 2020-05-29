@@ -37,8 +37,8 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-APP_TITLE	:=	ShareNX
-APP_VERSION	:=	1.1.2
+APP_TITLE	:=	ShareNX 
+APP_VERSION	:=	1.1.3
 
 TARGET		:=	ovlShareNX
 BUILD		:=	build

@@ -38,7 +38,7 @@ tsl::elm::Element *MainGui::createUI() {
 
     auto *button = new tsl::elm::ListItem("Upload");
     button->setClickListener([&](u64 keys) {
-        if (keys & KEY_A && !this->uploaded) {
+        if (keys & HidNpadButton_A && !this->uploaded) {
             std::string url = web::UploadImage(this->fileId);
             this->uploaded = true;
             this->img->setUrl(url);

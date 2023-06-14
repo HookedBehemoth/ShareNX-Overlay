@@ -42,10 +42,12 @@ tsl::elm::Element *MainGui::createUI() {
     auto button = new tsl::elm::ListItem("Upload");
     button->setClickListener([this, qr](u64 keys) {
         if (keys & HidNpadButton_A && !this->uploaded) {
-            std::string url = web::UploadImage(this->fileId);
+            auto [result, url] = web::UploadImage(this->fileId);
             this->uploaded = true;
             this->img->setUrl(url);
-            qr->generateQrCode(url);
+            if (result) {
+                qr->generateQrCode(url);
+            }
             return true;
         }
         return false;

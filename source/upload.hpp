@@ -23,6 +23,6 @@
 
 namespace web {
 
-    std::string UploadImage(const CapsAlbumFileId &fileId);
+    std::pair<bool, std::string> UploadImage(const CapsAlbumFileId &fileId);
 
 }

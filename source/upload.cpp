@@ -23,33 +23,38 @@
 #include <tesla.hpp>
 
 namespace web {
+namespace {
 
     size_t StringWrite(const char *contents, size_t size, size_t nmemb, std::string *userp) {
         userp->append(contents, size * nmemb);
         return size * nmemb;
     }
 
-    std::string UploadImage(const CapsAlbumFileId &fileId) {
+    using UploadResult = std::pair<bool, std::string>;
+
+} // namespace
+
+    std::pair<bool, std::string> UploadImage(const CapsAlbumFileId &fileId) {
         u64 size = 0;
         Result rc = capsaGetAlbumFileSize(&fileId, &size);
         if (R_FAILED(rc))
-            return "Can't get Filesize";
+            return UploadResult{false, "Can't get Filesize"};
 
         char *imgBuffer = new (std::nothrow) char[size];
         if (imgBuffer == nullptr)
-            return "Memory allocation failed";
+            return UploadResult{false, "Memory allocation failed"};
 
         tsl::hlp::ScopeGuard buffer_guard([imgBuffer] { delete[] imgBuffer; });
 
         u64 actualSize = 0;
         rc = capsaLoadAlbumFile(&fileId, &actualSize, imgBuffer, size);
         if (R_FAILED(rc)) {
-            return "Failed to load Image";
+            return UploadResult{false, "Failed to load Image"};
         }
 
         CURL *curl = curl_easy_init();
         if (curl == nullptr)
-            return "Failed to init curl";
+            return UploadResult{false, "Failed to init curl"};
 
         curl_mime *mime = curl_mime_init(curl);
         curl_mimepart *file_part = curl_mime_addpart(mime);
@@ -78,6 +83,7 @@ namespace web {
 
         long http_code = 0;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        bool curl_success{};
 
         if (res != CURLE_OK) {
             urlresponse = "Curl failed " + std::to_string(res);
@@ -85,12 +91,14 @@ namespace web {
             urlresponse = "Failed with " + std::to_string(http_code);
         } else if (urlresponse.size() > 0x30) {
             urlresponse = "Result too long";
+        } else {
+            curl_success = true;
         }
 
         curl_mime_free(mime);
         curl_easy_cleanup(curl);
 
-        return urlresponse;
+        return UploadResult{curl_success, urlresponse};
     }
 
 }

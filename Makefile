@@ -38,13 +38,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	ShareNX 
-APP_VERSION	:=	1.1.4
+APP_VERSION	:=	1.2.0
 
 TARGET		:=	ovlShareNX
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source libs/qr
 DATA		:=	data
-INCLUDES	:=	libs/libtesla/include
+INCLUDES	:=	libs/libtesla/include libs/qr
 
 ifeq ($(RELEASE),)
 	APP_VERSION	:=	$(APP_VERSION)-$(shell git describe --dirty --always)
@@ -189,7 +189,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 all	:	 $(OUTPUT).ovl
 
-$(OUTPUT).ovl		:	$(OUTPUT).elf $(OUTPUT).nacp 
+$(OUTPUT).ovl		:	$(OUTPUT).elf $(OUTPUT).nacp
 	@elf2nro $< $@ $(NROFLAGS)
 	@echo "built ... $(notdir $(OUTPUT).ovl)"
 

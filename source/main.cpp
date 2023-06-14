@@ -19,6 +19,7 @@
 #include "gui_error.hpp"
 #include "gui_main.hpp"
 #include "image_item.hpp"
+#include <curl/curl.h>
 
 #define R_INIT(cmd, message) \
     rc = cmd;                \
@@ -77,8 +78,13 @@ class ShareOverlay : public tsl::Overlay {
             msg = "CapSrv error!";
             return;
         }
+
+        if (CURLE_OK != curl_global_init(CURL_GLOBAL_DEFAULT)) {
+            msg = "curl_global_init error!";
+        }
     }
     virtual void exitServices() override {
+        curl_global_cleanup();
         capsaExit();
         socketExit();
     }

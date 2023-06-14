@@ -13,3 +13,4 @@ Put the .ovl from the release inside /switch/.overlays and start it from "Tesla 
 [WerWolv](https://github.com/WerWolv) for nx-ovlloader, libtesla and the template<br>
 [averne](https://github.com/averne) for his work on libtesla<br>
 [natinusala](https://github.com/natinusala) for his work on libtesla<br>
+[nayuki](https://github.com/nayuki/QR-Code-generator) for their amazing qr code generator<br>
